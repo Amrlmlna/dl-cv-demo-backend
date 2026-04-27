@@ -11,12 +11,11 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import pathlib
 
-# Fix path issue for Windows if torch hub uses pathlib.PosixPath
-temp = pathlib.PosixPath
-try:
-    pathlib.PosixPath = pathlib.WindowsPath
-except Exception:
-    pass
+# Fix path issue: If model was saved on Windows, it might contain WindowsPath objects.
+# We map WindowsPath to PosixPath when running on Linux/Render.
+import platform
+if platform.system() != 'Windows':
+    pathlib.WindowsPath = pathlib.PosixPath
 
 app = FastAPI()
 

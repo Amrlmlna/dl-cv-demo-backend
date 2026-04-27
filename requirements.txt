@@ -7,3 +7,4 @@ ultralytics
 opencv-python-headless
 numpy
 pandas
+uvicorn

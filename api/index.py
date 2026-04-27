@@ -42,12 +42,14 @@ CALORIE_DICT = {
     "Onion": 40, "Orange": 47, "Tomato": 18, "Qiwi": 44
 }
 
-# Load model globally to cache it during lambda lifecycle
+model_error = ""
 model = None
 try:
-    # Use ultralytics to load the model locally or from hub
-    model = torch.hub.load('ultralytics/yolov5', 'custom', path=MODEL_PATH, force_reload=False, _verbose=False)
+    # Use local YOLOv5 repo to avoid GitHub rate limits
+    yolov5_repo_path = os.path.join(os.path.dirname(__file__), 'yolov5')
+    model = torch.hub.load(yolov5_repo_path, 'custom', path=MODEL_PATH, source='local', force_reload=False, _verbose=False)
 except Exception as e:
+    model_error = str(e)
     print(f"Error loading model: {e}")
 
 def get_volume(label, area_pixel, skin_area_pixel, pix_to_cm, contour):
@@ -103,7 +105,7 @@ def read_root():
 @app.post("/analyze")
 async def analyze_image(file: UploadFile = File(...)):
     if model is None:
-        return JSONResponse(status_code=500, content={"error": "Model not loaded properly."})
+        return JSONResponse(status_code=500, content={"error": f"Model not loaded: {model_error}"})
 
     contents = await file.read()
     nparr = np.frombuffer(contents, np.uint8)
